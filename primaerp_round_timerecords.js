@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         primaERP - round timerecords by 15 min
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  primaERP - round timerecords by 15 min
 // @author       Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage     https://github.com/asux/userscripts/blob/master/primaerp_round_timerecords.js
@@ -11,6 +11,11 @@
 // @require      https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @run-at       document-idle
 // ==/UserScript==
+
+// When run inside Fluid application
+if (typeof fluid === 'object') {
+  fluid.include(fluid.resourcePath + 'scripts/waitForKeyElements.js');
+}
 
 (function() {
     'use strict';
