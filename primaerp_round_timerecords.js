@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         primaERP - round timerecords by 15 min
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  primaERP - round timerecords by 15 min
 // @author       Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage     https://github.com/asux/userscripts/blob/master/primaerp_round_timerecords.js
@@ -36,7 +36,7 @@ if (typeof fluid === 'object') {
             var text = $(this).text();
             var rounded = roundBy15Min(text);
             if (rounded !== null) {
-                return text + ' [ ' + rounded.toFixed(2) + ' ]';
+                return rounded.toFixed(2);
             }
         });
     }
