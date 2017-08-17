@@ -25,8 +25,7 @@ if (typeof fluid === 'object') {
         if (Array.isArray(m)) {
             var hours = parseFloat(m[1]);
             var part =  Math.ceil(parseFloat(m[2]) / 15) / 4;
-            var roundedValue = hours + part;
-            return roundedValue;
+            return hours + part;
         }
         return null;
     }
@@ -41,6 +40,7 @@ if (typeof fluid === 'object') {
         });
     }
 
-    waitForKeyElements('table.primaReportTable', updateTimeRecords);
-
+    if (typeof waitForKeyElements === 'function') {
+        waitForKeyElements('table.primaReportTable', updateTimeRecords);
+    }
 })();
