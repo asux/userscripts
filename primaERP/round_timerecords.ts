@@ -21,7 +21,7 @@ if (typeof fluid === 'object') {
 }
 
 function roundBy15Min(text: string): number {
-    var matches = text.match(/(\d{2}):(\d{2})/);
+    let matches = text.match(/(\d{2}):(\d{2})/);
     if (Array.isArray(matches)) {
         let hours: number = parseFloat(matches[1]);
         let part: number =  Math.ceil(parseFloat(matches[2]) / 15) / 4;
@@ -32,8 +32,8 @@ function roundBy15Min(text: string): number {
 
 function updateTimeRecords(): void {
     $('table.primaReportTable td.right span.help').text(function() {
-        var text = $(this).text();
-        var rounded = roundBy15Min(text);
+        let text = $(this).text();
+        let rounded = roundBy15Min(text);
         if (rounded !== null) {
             return rounded.toFixed(2);
         }
