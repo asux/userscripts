@@ -4,8 +4,8 @@
 // @version      0.4.1
 // @description  primaERP - round timerecords by 15 min
 // @author       Alex Ulianytskyi <a.ulyanitsky@gmail.com>
-// @homepage     https://github.com/asux/userscripts/blob/master/primaERP/primaerp_round_timerecords.js
-// @downloadURL  https://raw.githubusercontent.com/asux/userscripts/master/primaERP/primaerp_round_timerecords.js
+// @homepage     https://github.com/asux/userscripts/blob/master/primaERP/round_timerecords.js
+// @downloadURL  https://raw.githubusercontent.com/asux/userscripts/master/primaERP/round_timerecords.js
 // @match        https://*.primaerp.com/reports/*
 // @grant        none
 // @require      https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
