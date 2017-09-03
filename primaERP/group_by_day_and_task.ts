@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         primaERP - aggreagte billable time by day and task
+// @name         primaERP - group billable time by day and task
 // @namespace    http://tampermonkey.net/
 // @version      0.1.0
-// @description  primaERP - aggreagte billable time by day and task
+// @description  primaERP - group billable time by day and task
 // @author       Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage     https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
 // @downloadURL  https://raw.githubusercontent.com/asux/userscripts/master/primaERP/aggregate_by_day_and_time.js
