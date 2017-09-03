@@ -18,7 +18,7 @@ if (typeof fluid === 'object') {
 }
 
 namespace RoundTimerecords {
-    function roundBy15Min(text: string): number {
+    export function roundBy15Min(text: string): number {
         let matches = text.match(/(\d{2}):(\d{2})/);
         if (Array.isArray(matches)) {
             let hours: number = parseFloat(matches[1]);

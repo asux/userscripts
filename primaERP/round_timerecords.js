@@ -27,6 +27,7 @@ var RoundTimerecords;
         }
         return parseFloat(text);
     }
+    RoundTimerecords.roundBy15Min = roundBy15Min;
     function updateTimeRecords(root) {
         root.find('td.right span.help').text(function () {
             var text = $(this).text();
