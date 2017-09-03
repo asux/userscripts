@@ -65,7 +65,7 @@ function groupByDateAndTask(collection: TimeRecord[]): TimeRecord[] {
     let existed = result.find((element, index, array) => {
       return element.date == item.date && element.task == item.task;
     });
-    if (existed) { return };
+    if (existed) { return; };
     let grouped: TimeRecord[] = array.filter((element, index, array) => {
       return element.date == item.date && element.task == item.task;
     });
@@ -77,16 +77,50 @@ function groupByDateAndTask(collection: TimeRecord[]): TimeRecord[] {
       task: item.task,
       billableHours: sumBillableHours
     }
-    console.log(`${resultItem.date} | ${resultItem.task} | ${resultItem.billableHours}`);
+    console.log(`${resultItem.date} | ${resultItem.task} | ${resultItem.billableHours.toFixed(2)}`);
     result.push(resultItem);
   });
   return result;
 }
 
+function renderTableWithResults (container: JQuery<HTMLElement>, results: TimeRecord[]): void {
+  let box = $(`<div class="row space-after">
+                  <div class="col-md-12">
+                    <div class="box border space-after space-right">
+                      <h2>Tasks summary</h2>
+                      <div class="boxcontent"></div>
+                    </div>
+                  </div>
+                </div>`);
+  let table = $('<table class="table table-condensed primaReportTable tasks-table"></table>');
+  let header = $(`<thead>
+                    <tr>
+                    <th>Date</th>
+                    <th>Task</th>
+                    <th class="right">Billable Hours</th>
+                    </tr>
+                  </thead>`);
+  let tbody = $('<tbody></tbody>');
+  results.forEach((timeRecord, index, array) => {
+    let row = $(`<tr>
+                  <td>${timeRecord.date}</td>
+                  <td>${timeRecord.task}</td>
+                  <td class="right">${timeRecord.billableHours.toFixed(2)}</td>
+                </tr>`);
+    tbody.append(row);
+  });
+  table.append(header);
+  table.append(tbody);
+  $('.boxcontent', box).append(table);
+  container.append(box);
+}
+
 function collectAndGroupByDateAndTask(root: JQuery): void {
-  groupByDateAndTask(collectTimeRecords(root));
+  let results = groupByDateAndTask(collectTimeRecords(root));
+  renderTableWithResults(root.parents('.report'), results);
 }
 
 if (typeof waitForKeyElements === 'function') {
-  waitForKeyElements('table.table-condensed.primaReportTable.summary-table', collectAndGroupByDateAndTask);
+  let tableSel = 'table.table-condensed.primaReportTable.summary-table';
+  waitForKeyElements(tableSel, collectAndGroupByDateAndTask);
 }

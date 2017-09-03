@@ -1,3 +1,4 @@
+"use strict";
 // ==UserScript==
 // @name         primaERP - group billable time by day and task
 // @namespace    http://tampermonkey.net/
@@ -69,14 +70,30 @@ function groupByDateAndTask(collection) {
             task: item.task,
             billableHours: sumBillableHours
         };
-        console.log(resultItem.date + " | " + resultItem.task + " | " + resultItem.billableHours);
+        console.log(resultItem.date + " | " + resultItem.task + " | " + resultItem.billableHours.toFixed(2));
         result.push(resultItem);
     });
     return result;
 }
+function renderTableWithResults(container, results) {
+    var box = $("<div class=\"row space-after\">\n                  <div class=\"col-md-12\">\n                    <div class=\"box border space-after space-right\">\n                      <h2>Tasks summary</h2>\n                      <div class=\"boxcontent\"></div>\n                    </div>\n                  </div>\n                </div>");
+    var table = $('<table class="table table-condensed primaReportTable tasks-table"></table>');
+    var header = $("<thead>\n                    <tr>\n                    <th>Date</th>\n                    <th>Task</th>\n                    <th class=\"right\">Billable Hours</th>\n                    </tr>\n                  </thead>");
+    var tbody = $('<tbody></tbody>');
+    results.forEach(function (timeRecord, index, array) {
+        var row = $("<tr>\n                  <td>" + timeRecord.date + "</td>\n                  <td>" + timeRecord.task + "</td>\n                  <td class=\"right\">" + timeRecord.billableHours.toFixed(2) + "</td>\n                </tr>");
+        tbody.append(row);
+    });
+    table.append(header);
+    table.append(tbody);
+    $('.boxcontent', box).append(table);
+    container.append(box);
+}
 function collectAndGroupByDateAndTask(root) {
-    groupByDateAndTask(collectTimeRecords(root));
+    var results = groupByDateAndTask(collectTimeRecords(root));
+    renderTableWithResults(root.parents('.report'), results);
 }
 if (typeof waitForKeyElements === 'function') {
-    waitForKeyElements('table.table-condensed.primaReportTable.summary-table', collectAndGroupByDateAndTask);
+    var tableSel = 'table.table-condensed.primaReportTable.summary-table';
+    waitForKeyElements(tableSel, collectAndGroupByDateAndTask);
 }
