@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         primaERP - round timerecords by 15 min
 // @namespace    http://tampermonkey.net/
-// @version      0.5.0
+// @version      0.5.1
 // @description  primaERP - round timerecords by 15 min
 // @author       Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage     https://github.com/asux/userscripts/blob/master/primaERP/round_timerecords.js
