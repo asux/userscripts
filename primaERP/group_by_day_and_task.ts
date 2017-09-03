@@ -116,8 +116,10 @@ function renderTableWithResults (container: JQuery<HTMLElement>, results: TimeRe
 }
 
 function collectAndGroupByDateAndTask(root: JQuery): void {
-  let results = groupByDateAndTask(collectTimeRecords(root));
-  renderTableWithResults(root.parents('.report'), results);
+  setTimeout(() => {
+    let results = groupByDateAndTask(collectTimeRecords(root));
+    renderTableWithResults(root.parents('.report'), results);
+  }, 1000);
 }
 
 if (typeof waitForKeyElements === 'function') {

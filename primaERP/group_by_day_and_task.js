@@ -90,8 +90,10 @@ function renderTableWithResults(container, results) {
     container.append(box);
 }
 function collectAndGroupByDateAndTask(root) {
-    var results = groupByDateAndTask(collectTimeRecords(root));
-    renderTableWithResults(root.parents('.report'), results);
+    setTimeout(function () {
+        var results = groupByDateAndTask(collectTimeRecords(root));
+        renderTableWithResults(root.parents('.report'), results);
+    }, 1000);
 }
 if (typeof waitForKeyElements === 'function') {
     var tableSel = 'table.table-condensed.primaReportTable.summary-table';
