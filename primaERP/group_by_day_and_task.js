@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name           primaERP - group billable time by day and task
 // @namespace      http://tampermonkey.net/
-// @version        0.3.0
+// @version        0.4.0
 // @description    primaERP - group billable time by day and task
 // @author         Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage       https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
@@ -16,8 +16,8 @@
 if (typeof fluid === 'object') {
     fluid.include(fluid.resourcePath + 'scripts/waitForKeyElements.js');
 }
-var RoundTimerecords;
-(function (RoundTimerecords) {
+var GroupByDateAndTask;
+(function (GroupByDateAndTask) {
     function roundBy15Min(text) {
         var matches = text.match(/(\d{2}):(\d{2})/);
         if (Array.isArray(matches)) {
@@ -27,20 +27,12 @@ var RoundTimerecords;
         }
         return parseFloat(text);
     }
-    RoundTimerecords.roundBy15Min = roundBy15Min;
     function updateTimeRecords(root) {
-        root.find('td.right span.help').text(function () {
-            var text = $(this).text();
-            var rounded = roundBy15Min(text);
-            if (rounded !== null) {
-                return rounded.toFixed(2);
-            }
+        root.find('td.right span.help').text(function (index, text) {
+            return roundBy15Min(text).toFixed(2);
         });
     }
-    RoundTimerecords.updateTimeRecords = updateTimeRecords;
-})(RoundTimerecords || (RoundTimerecords = {}));
-var GroupByDateAndTask;
-(function (GroupByDateAndTask) {
+    GroupByDateAndTask.updateTimeRecords = updateTimeRecords;
     function getCellText(cells, n) {
         return $(cells[n]).text().trim();
     }
@@ -66,7 +58,7 @@ var GroupByDateAndTask;
                 project: getCellText(cells, 4),
                 task: getCellText(cells, 5),
                 activity: getCellText(cells, 6),
-                billableHours: RoundTimerecords.roundBy15Min(getCellText(cells, 7)),
+                billableHours: roundBy15Min(getCellText(cells, 7)),
                 price: parseFloat(getCellText(cells, 8)),
                 billableUSD: parseFloat(getCellText(cells, 9))
             };
@@ -123,7 +115,7 @@ var GroupByDateAndTask;
 if (typeof waitForKeyElements === 'function') {
     var tableSel = 'table.table-condensed.primaReportTable.summary-table';
     waitForKeyElements(tableSel, function (root) {
-        RoundTimerecords.updateTimeRecords(root);
+        GroupByDateAndTask.updateTimeRecords(root);
         GroupByDateAndTask.collectAndGroupByDateAndTask(root);
     });
 }

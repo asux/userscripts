@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           primaERP - group billable time by day and task
 // @namespace      http://tampermonkey.net/
-// @version        0.3.0
+// @version        0.4.0
 // @description    primaERP - group billable time by day and task
 // @author         Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage       https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
@@ -16,27 +16,7 @@
 if (typeof fluid === 'object') {
     fluid.include(fluid.resourcePath + 'scripts/waitForKeyElements.js');
 }
-namespace RoundTimerecords {
-    export function roundBy15Min(text: string): number {
-        let matches = text.match(/(\d{2}):(\d{2})/);
-        if (Array.isArray(matches)) {
-            let hours: number = parseFloat(matches[1]);
-            let part: number =  Math.ceil(parseFloat(matches[2]) / 15) / 4;
-            return hours + part;
-        }
-        return parseFloat(text);
-    }
 
-    export function updateTimeRecords(root: JQuery): void {
-        root.find('td.right span.help').text(function() {
-            let text = $(this).text();
-            let rounded = roundBy15Min(text);
-            if (rounded !== null) {
-                return rounded.toFixed(2);
-            }
-        });
-    }
-}
 namespace GroupByDateAndTask {
     interface TimeRecord {
         date: string;
@@ -49,6 +29,22 @@ namespace GroupByDateAndTask {
         billableHours: number;
         price?: number;
         billableUSD?: number;
+    }
+
+    function roundBy15Min(text: string): number {
+        let matches = text.match(/(\d{2}):(\d{2})/);
+        if (Array.isArray(matches)) {
+            let hours: number = parseFloat(matches[1]);
+            let part: number =  Math.ceil(parseFloat(matches[2]) / 15) / 4;
+            return hours + part;
+        }
+        return parseFloat(text);
+    }
+
+    export function updateTimeRecords(root: JQuery): void {
+        root.find('td.right span.help').text((index, text) => {
+            return roundBy15Min(text).toFixed(2);
+        });
     }
 
     function getCellText(cells: HTMLTableElement[], n: number) {
@@ -71,7 +67,7 @@ namespace GroupByDateAndTask {
                 project: getCellText(cells, 4),
                 task: getCellText(cells, 5),
                 activity: getCellText(cells, 6),
-                billableHours: RoundTimerecords.roundBy15Min(getCellText(cells, 7)),
+                billableHours: roundBy15Min(getCellText(cells, 7)),
                 price: parseFloat(getCellText(cells, 8)),
                 billableUSD: parseFloat(getCellText(cells, 9))
             }
@@ -146,7 +142,7 @@ namespace GroupByDateAndTask {
 if (typeof waitForKeyElements === 'function') {
     let tableSel = 'table.table-condensed.primaReportTable.summary-table';
     waitForKeyElements(tableSel, (root) => {
-        RoundTimerecords.updateTimeRecords(root);
+        GroupByDateAndTask.updateTimeRecords(root);
         GroupByDateAndTask.collectAndGroupByDateAndTask(root);
     });
 }
