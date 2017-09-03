@@ -20,12 +20,15 @@ function getCellText(cells, n) {
 }
 function collectTimeRecords(root) {
     var timeRecords = [];
-    root.find('tr').each(function () {
+    root.find('tbody tr').each(function () {
         var row = $(this);
         if (row.hasClass('group-header')) {
             return;
         }
-        if (row.hasClass('record-description-header')) {
+        if (row.hasClass('record-description')) {
+            return;
+        }
+        if (row.hasClass('group-footer')) {
             return;
         }
         var cells = row.find('td');
@@ -45,6 +48,35 @@ function collectTimeRecords(root) {
     });
     return timeRecords;
 }
+function groupByDateAndTask(collection) {
+    var result = [];
+    collection.forEach(function (item, index, array) {
+        var existed = result.find(function (element, index, array) {
+            return element.date == item.date && element.task == item.task;
+        });
+        if (existed) {
+            return;
+        }
+        ;
+        var grouped = array.filter(function (element, index, array) {
+            return element.date == item.date && element.task == item.task;
+        });
+        var sumBillableHours = grouped.reduce(function (acc, value, index) {
+            return acc + value.billableHours;
+        }, 0.0);
+        var resultItem = {
+            date: item.date,
+            task: item.task,
+            billableHours: sumBillableHours
+        };
+        console.log(resultItem.date + " | " + resultItem.task + " | " + resultItem.billableHours);
+        result.push(resultItem);
+    });
+    return result;
+}
+function collectAndGroupByDateAndTask(root) {
+    groupByDateAndTask(collectTimeRecords(root));
+}
 if (typeof waitForKeyElements === 'function') {
-    waitForKeyElements('table.primaReportTable tbody', collectTimeRecords);
+    waitForKeyElements('table.table-condensed.primaReportTable.summary-table', collectAndGroupByDateAndTask);
 }
