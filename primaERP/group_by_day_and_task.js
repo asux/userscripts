@@ -1,9 +1,9 @@
 "use strict";
 // ==UserScript==
-// @name           primaERP - group billable time by day and task
+// @name           primaERP - group billable time by day, project and task
 // @namespace      http://tampermonkey.net/
-// @version        0.4.1
-// @description    primaERP - group billable time by day and task
+// @version        0.5.0
+// @description    primaERP - group billable time by day, project and task
 // @author         Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage       https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
 // @downloadURL    https://raw.githubusercontent.com/asux/userscripts/master/primaERP/aggregate_by_day_and_time.js
@@ -66,28 +66,34 @@ var GroupByDateAndTask;
         });
         return timeRecords;
     }
-    function groupByDateAndTask(collection) {
+    function groupByDateProjectTask(collection) {
         var result = [];
+        var uniqTest = function (element, item) {
+            return element.date == item.date &&
+                element.task == item.task &&
+                element.project == item.project;
+        };
         collection.forEach(function (item, index, array) {
             var existed = result.find(function (element, index, array) {
-                return element.date == item.date && element.task == item.task;
+                return uniqTest(element, item);
             });
             if (existed) {
                 return;
             }
             ;
             var grouped = array.filter(function (element, index, array) {
-                return element.date == item.date && element.task == item.task;
+                return uniqTest(element, item);
             });
             var sumBillableHours = grouped.reduce(function (acc, value, index) {
                 return acc + value.billableHours;
             }, 0.0);
             var resultItem = {
                 date: item.date,
+                project: item.project,
                 task: item.task,
                 billableHours: sumBillableHours
             };
-            console.log(resultItem.date + " | " + resultItem.task + " | " + resultItem.billableHours.toFixed(2));
+            console.log(resultItem.date + " | " + item.project + " | " + resultItem.task + " | " + resultItem.billableHours.toFixed(2));
             result.push(resultItem);
         });
         return result;
@@ -95,10 +101,10 @@ var GroupByDateAndTask;
     function renderTableWithResults(container, results) {
         var box = $("<div class=\"row space-after\">\n                        <div class=\"col-md-12\">\n                            <div class=\"box border space-after space-right\">\n                                <h2>Tasks summary</h2>\n                                <div class=\"boxcontent\"></div>\n                            </div>\n                        </div>\n                    </div>");
         var table = $('<table class="table table-condensed primaReportTable tasks-table"></table>');
-        var header = $("<thead>\n                            <tr>\n                            <th>Date</th>\n                            <th>Task</th>\n                            <th class=\"right\">Billable Hours</th>\n                            </tr>\n                        </thead>");
+        var header = $("<thead>\n                            <tr>\n                            <th>Date</th>\n                            <th>Project</th>\n                            <th>Task</th>\n                            <th class=\"right\">Billable Hours</th>\n                            </tr>\n                        </thead>");
         var tbody = $('<tbody></tbody>');
         results.forEach(function (timeRecord, index, array) {
-            var row = $("<tr>\n                            <td>" + timeRecord.date + "</td>\n                            <td>" + timeRecord.task + "</td>\n                            <td class=\"right\">" + timeRecord.billableHours.toFixed(2) + "</td>\n                        </tr>");
+            var row = $("<tr>\n                            <td>" + timeRecord.date + "</td>\n                            <td>" + timeRecord.project + "</td>\n                            <td>" + timeRecord.task + "</td>\n                            <td class=\"right\">" + timeRecord.billableHours.toFixed(2) + "</td>\n                        </tr>");
             tbody.append(row);
         });
         table.append(header);
@@ -106,16 +112,16 @@ var GroupByDateAndTask;
         $('.boxcontent', box).append(table);
         container.append(box);
     }
-    function collectAndGroupByDateAndTask(root) {
-        var results = groupByDateAndTask(collectTimeRecords(root));
+    function collectAndGroup(root) {
+        var results = groupByDateProjectTask(collectTimeRecords(root));
         renderTableWithResults(root.parents('.report'), results);
     }
-    GroupByDateAndTask.collectAndGroupByDateAndTask = collectAndGroupByDateAndTask;
+    GroupByDateAndTask.collectAndGroup = collectAndGroup;
 })(GroupByDateAndTask || (GroupByDateAndTask = {}));
 if (typeof waitForKeyElements === 'function') {
     var tableSel = 'table.table-condensed.primaReportTable.summary-table';
     waitForKeyElements(tableSel, function (root) {
         GroupByDateAndTask.updateTimeRecords(root);
-        GroupByDateAndTask.collectAndGroupByDateAndTask(root);
+        GroupByDateAndTask.collectAndGroup(root);
     });
 }

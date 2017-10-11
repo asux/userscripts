@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name           primaERP - group billable time by day and task
+// @name           primaERP - group billable time by day, project and task
 // @namespace      http://tampermonkey.net/
-// @version        0.4.1
-// @description    primaERP - group billable time by day and task
+// @version        0.5.0
+// @description    primaERP - group billable time by day, project and task
 // @author         Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage       https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
 // @downloadURL    https://raw.githubusercontent.com/asux/userscripts/master/primaERP/aggregate_by_day_and_time.js
@@ -76,31 +76,37 @@ namespace GroupByDateAndTask {
         return timeRecords;
     }
 
-    function groupByDateAndTask(collection: TimeRecord[]): TimeRecord[] {
+    function groupByDateProjectTask(collection: TimeRecord[]): TimeRecord[] {
         var result: TimeRecord[] = [];
+        let uniqTest = (element: TimeRecord, item: TimeRecord) => {
+            return element.date == item.date &&
+                element.task == item.task &&
+                element.project == item.project;
+        };
         collection.forEach((item, index, array) => {
-            let existed = result.find((element, index, array) => {
-                return element.date == item.date && element.task == item.task;
+            let existed = result.find((element: TimeRecord, index: number, array: TimeRecord[]) => {
+                return uniqTest(element, item)
             });
             if (existed) { return; };
             let grouped: TimeRecord[] = array.filter((element, index, array) => {
-                return element.date == item.date && element.task == item.task;
+                return uniqTest(element, item)
             });
             let sumBillableHours: number = grouped.reduce((acc, value, index) => {
                 return acc + value.billableHours;
             }, 0.0);
             let resultItem: TimeRecord = {
                 date: item.date,
+                project: item.project,
                 task: item.task,
                 billableHours: sumBillableHours
             }
-            console.log(`${resultItem.date} | ${resultItem.task} | ${resultItem.billableHours.toFixed(2)}`);
+            console.log(`${resultItem.date} | ${item.project} | ${resultItem.task} | ${resultItem.billableHours.toFixed(2)}`);
             result.push(resultItem);
         });
         return result;
     }
 
-    function renderTableWithResults (container: JQuery<HTMLElement>, results: TimeRecord[]): void {
+    function renderTableWithResults(container: JQuery<HTMLElement>, results: TimeRecord[]): void {
         let box = $(`<div class="row space-after">
                         <div class="col-md-12">
                             <div class="box border space-after space-right">
@@ -113,6 +119,7 @@ namespace GroupByDateAndTask {
         let header = $(`<thead>
                             <tr>
                             <th>Date</th>
+                            <th>Project</th>
                             <th>Task</th>
                             <th class="right">Billable Hours</th>
                             </tr>
@@ -121,6 +128,7 @@ namespace GroupByDateAndTask {
         results.forEach((timeRecord, index, array) => {
             let row = $(`<tr>
                             <td>${timeRecord.date}</td>
+                            <td>${timeRecord.project}</td>
                             <td>${timeRecord.task}</td>
                             <td class="right">${timeRecord.billableHours.toFixed(2)}</td>
                         </tr>`);
@@ -132,8 +140,8 @@ namespace GroupByDateAndTask {
         container.append(box);
     }
 
-    export function collectAndGroupByDateAndTask(root: JQuery): void {
-        let results = groupByDateAndTask(collectTimeRecords(root));
+    export function collectAndGroup(root: JQuery): void {
+        let results = groupByDateProjectTask(collectTimeRecords(root));
         renderTableWithResults(root.parents('.report'), results);
     }
 
@@ -143,6 +151,6 @@ if (typeof waitForKeyElements === 'function') {
     let tableSel = 'table.table-condensed.primaReportTable.summary-table';
     waitForKeyElements(tableSel, (root) => {
         GroupByDateAndTask.updateTimeRecords(root);
-        GroupByDateAndTask.collectAndGroupByDateAndTask(root);
+        GroupByDateAndTask.collectAndGroup(root);
     });
 }
