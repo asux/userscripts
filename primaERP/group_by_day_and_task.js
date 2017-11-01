@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name           primaERP - group billable time by day, project and task
 // @namespace      http://tampermonkey.net/
-// @version        0.5.0
+// @version        0.6.0
 // @description    primaERP - group billable time by day, project and task
 // @author         Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage       https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
@@ -18,18 +18,54 @@ if (typeof fluid === 'object') {
 }
 var GroupByDateAndTask;
 (function (GroupByDateAndTask) {
-    function roundBy15Min(text) {
-        var matches = text.match(/(\d{2}):(\d{2})/);
-        if (Array.isArray(matches)) {
-            var hours = parseFloat(matches[1]);
-            var part = Math.ceil(parseFloat(matches[2]) / 15) / 4;
-            return hours + part;
+    var Duration = /** @class */ (function () {
+        function Duration(hours, minutes) {
+            this.hours = hours;
+            this.minutes = minutes;
         }
-        return parseFloat(text);
-    }
+        ;
+        Duration.parse = function (text) {
+            var hours = 0;
+            var minutes = 0;
+            var matches = text.match(/(\d{2}):(\d{2})/);
+            if (Array.isArray(matches)) {
+                hours = parseInt(matches[1]);
+                minutes = parseInt(matches[2]);
+            }
+            return new Duration(hours, minutes);
+        };
+        Duration.prototype.add = function (other) {
+            if (!other) {
+                return this;
+            }
+            var hours = this.hours + other.hours;
+            var minutes = this.minutes + other.minutes;
+            if (minutes > 60) {
+                var hours_more = Math.floor(minutes / 60);
+                minutes = (minutes - hours_more * 60);
+                hours += hours_more;
+            }
+            return new Duration(hours, minutes);
+        };
+        Duration.prototype.toRoundedFloat = function (period) {
+            if (period === void 0) { period = 15; }
+            var part = Math.ceil(this.minutes / period) * period / 60.0;
+            return this.hours + part;
+        };
+        Duration.prototype.toString = function () {
+            return this.formattedHours() + ':' + this.formattedMinutes();
+        };
+        Duration.prototype.formattedHours = function () {
+            return ('0' + this.hours).slice(-2);
+        };
+        Duration.prototype.formattedMinutes = function () {
+            return ('0' + this.minutes).slice(-2);
+        };
+        return Duration;
+    }());
     function updateTimeRecords(root) {
         root.find('td.right span.help').text(function (index, text) {
-            return roundBy15Min(text).toFixed(2);
+            return Duration.parse(text).toRoundedFloat().toFixed(2);
         });
     }
     GroupByDateAndTask.updateTimeRecords = updateTimeRecords;
@@ -52,13 +88,13 @@ var GroupByDateAndTask;
             var cells = row.find('td');
             var timeRecord = {
                 date: getCellText(cells, 0),
-                time: getCellText(cells, 1),
+                time: Duration.parse(getCellText(cells, 1)),
                 user: getCellText(cells, 2),
                 client: getCellText(cells, 3),
                 project: getCellText(cells, 4),
                 task: getCellText(cells, 5),
                 activity: getCellText(cells, 6),
-                billableHours: roundBy15Min(getCellText(cells, 7)),
+                billableHours: parseFloat(getCellText(cells, 7)),
                 price: parseFloat(getCellText(cells, 8)),
                 billableUSD: parseFloat(getCellText(cells, 9))
             };
@@ -70,8 +106,8 @@ var GroupByDateAndTask;
         var result = [];
         var uniqTest = function (element, item) {
             return element.date == item.date &&
-                element.task == item.task &&
-                element.project == item.project;
+                element.project == item.project &&
+                element.task == item.task;
         };
         collection.forEach(function (item, index, array) {
             var existed = result.find(function (element, index, array) {
@@ -84,6 +120,9 @@ var GroupByDateAndTask;
             var grouped = array.filter(function (element, index, array) {
                 return uniqTest(element, item);
             });
+            var sumTime = grouped.reduce(function (acc, value, index) {
+                return acc.add(value.time);
+            }, new Duration(0, 0));
             var sumBillableHours = grouped.reduce(function (acc, value, index) {
                 return acc + value.billableHours;
             }, 0.0);
@@ -91,9 +130,10 @@ var GroupByDateAndTask;
                 date: item.date,
                 project: item.project,
                 task: item.task,
+                time: sumTime,
                 billableHours: sumBillableHours
             };
-            console.log(resultItem.date + " | " + item.project + " | " + resultItem.task + " | " + resultItem.billableHours.toFixed(2));
+            console.log(resultItem.date + " | " + item.project + " | " + resultItem.task + " | " + resultItem.time + " | " + resultItem.billableHours.toFixed(2));
             result.push(resultItem);
         });
         return result;
@@ -101,10 +141,10 @@ var GroupByDateAndTask;
     function renderTableWithResults(container, results) {
         var box = $("<div class=\"row space-after\">\n                        <div class=\"col-md-12\">\n                            <div class=\"box border space-after space-right\">\n                                <h2>Tasks summary</h2>\n                                <div class=\"boxcontent\"></div>\n                            </div>\n                        </div>\n                    </div>");
         var table = $('<table class="table table-condensed primaReportTable tasks-table"></table>');
-        var header = $("<thead>\n                            <tr>\n                            <th>Date</th>\n                            <th>Project</th>\n                            <th>Task</th>\n                            <th class=\"right\">Billable Hours</th>\n                            </tr>\n                        </thead>");
+        var header = $("<thead>\n                            <tr>\n                            <th>Date</th>\n                            <th>Project</th>\n                            <th>Task</th>\n                            <th class=\"right\">Time</th>\n                            <th class=\"right\">Billable Hours</th>\n                            </tr>\n                        </thead>");
         var tbody = $('<tbody></tbody>');
         results.forEach(function (timeRecord, index, array) {
-            var row = $("<tr>\n                            <td>" + timeRecord.date + "</td>\n                            <td>" + timeRecord.project + "</td>\n                            <td>" + timeRecord.task + "</td>\n                            <td class=\"right\">" + timeRecord.billableHours.toFixed(2) + "</td>\n                        </tr>");
+            var row = $("<tr>\n                            <td>" + timeRecord.date + "</td>\n                            <td>" + timeRecord.project + "</td>\n                            <td>" + timeRecord.task + "</td>\n                            <td class=\"right\">" + timeRecord.time + "</td>\n                            <td class=\"right\">" + timeRecord.billableHours.toFixed(2) + "</td>\n                        </tr>");
             tbody.append(row);
         });
         table.append(header);
