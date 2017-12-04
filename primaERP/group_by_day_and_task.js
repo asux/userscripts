@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name           primaERP - group billable time by day, project and task
 // @namespace      http://tampermonkey.net/
-// @version        0.6.0
+// @version        0.6.1
 // @description    primaERP - group billable time by day, project and task
 // @author         Alex Ulianytskyi <a.ulyanitsky@gmail.com>
 // @homepage       https://github.com/asux/userscripts/blob/master/primaERP/aggregate_by_day_and_time.js
@@ -23,7 +23,6 @@ var GroupByDateAndTask;
             this.hours = hours;
             this.minutes = minutes;
         }
-        ;
         Duration.parse = function (text) {
             var hours = 0;
             var minutes = 0;
@@ -40,9 +39,9 @@ var GroupByDateAndTask;
             }
             var hours = this.hours + other.hours;
             var minutes = this.minutes + other.minutes;
-            if (minutes > 60) {
+            if (minutes >= 60) {
                 var hours_more = Math.floor(minutes / 60);
-                minutes = (minutes - hours_more * 60);
+                minutes = minutes - hours_more * 60;
                 hours += hours_more;
             }
             return new Duration(hours, minutes);
@@ -65,12 +64,16 @@ var GroupByDateAndTask;
     }());
     function updateTimeRecords(root) {
         root.find('td.right span.help').text(function (index, text) {
-            return Duration.parse(text).toRoundedFloat().toFixed(2);
+            return Duration.parse(text)
+                .toRoundedFloat()
+                .toFixed(2);
         });
     }
     GroupByDateAndTask.updateTimeRecords = updateTimeRecords;
     function getCellText(cells, n) {
-        return $(cells[n]).text().trim();
+        return $(cells[n])
+            .text()
+            .trim();
     }
     function collectTimeRecords(root) {
         var timeRecords = [];
@@ -105,9 +108,7 @@ var GroupByDateAndTask;
     function groupByDateProjectTask(collection) {
         var result = [];
         var uniqTest = function (element, item) {
-            return element.date == item.date &&
-                element.project == item.project &&
-                element.task == item.task;
+            return element.date == item.date && element.project == item.project && element.task == item.task;
         };
         collection.forEach(function (item, index, array) {
             var existed = result.find(function (element, index, array) {
@@ -116,7 +117,6 @@ var GroupByDateAndTask;
             if (existed) {
                 return;
             }
-            ;
             var grouped = array.filter(function (element, index, array) {
                 return uniqTest(element, item);
             });
